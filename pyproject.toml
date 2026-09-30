@@ -14,10 +14,20 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Detector backend — needed to run the experiment pipeline (pulls torch).
+infer = [
+    "ultralytics>=8.0.0",
+]
+# Result analysis and figure generation.
+analysis = [
+    "pandas>=1.5",
+    "matplotlib>=3.6",
+]
 dev = [
     "pytest>=7.0",
     "pytest-cov",
 ]
+# Learned-policy comparisons (lr_policy, rf_policy).
 ml = [
     "scikit-learn>=1.2",
 ]
