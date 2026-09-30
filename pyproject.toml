@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dms-thesis"
+version = "0.1.0"
+description = "Dynamic Model Switching for Real-Time UAV Inspection"
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>=1.23",
+    "opencv-python>=4.7",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov",
+]
+ml = [
+    "scikit-learn>=1.2",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["dms*"]
+exclude = ["tests*", "experiments*", "analysis*", "results*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-ra --strict-markers"

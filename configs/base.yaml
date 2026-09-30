@@ -1,0 +1,95 @@
+# DMS thesis — base configuration
+#
+# Per-platform configs (local_windows.yaml, remote_linux.yaml, jetson.yaml)
+# inherit from this file via experiment runners and override only what
+# differs (paths, device, batch size, max workers).
+#
+# Numeric defaults reproduce the thesis sweep settings.
+
+run:
+  seed: 1337
+  # 'cpu' | 'cuda' | 'tensorrt' (Jetson only; engines are pre-built)
+  device: cpu
+
+dataset:
+  # Internal taxonomy (used in code paths and master_table columns):
+  #   ins_s            independent labelled APOLI subset (validation only)
+  #   ins_m_glass      glass UAV inspection set
+  #   ins_m_porcelain  porcelain UAV inspection set
+  #   uav_video_glass  glass UAV video benchmark
+  #   uav_video_porcelain  porcelain UAV video benchmark
+  name: ins_m_glass
+  # Resolution at which inference runs (model input).
+  imgsz: 640
+
+proxy:
+  # Resolution at which scene proxies are computed.
+  # Thesis sweep used 160; 320/480/native are scheduled for the
+  # resolution ablation in stage 3.
+  size: 160
+  # When false, the proxy resize warps to size x size (legacy thesis
+  # behaviour). When true, letterboxes to preserve aspect (the
+  # methodologically correct alternative reported in the ablation).
+  preserve_aspect: false
+  # Which proxies to compute. Names map to FrameFeatures fields.
+  features:
+    - L              # Laplacian variance
+    - H              # Shannon entropy (gray)
+    - color_entropy  # HSV joint entropy
+    - tenengrad      # Sobel gradient magnitude
+    - edge_density   # Canny edge density
+    - local_contrast # RMS pixel std
+
+policy:
+  # One of the 7 canonical names. Per-policy parameters are nested below.
+  name: conf_ema
+
+  # Combined / CombinedHyst
+  alpha: 0.6
+  L_direction: 1   # +1 = high L treated as harder; -1 = inverted
+  H_direction: 1
+  history_window_size: 200
+  norm_lo_pct: 10.0
+  norm_hi_pct: 90.0
+  c_mid: 0.50
+  c_low: 0.45
+  c_high: 0.55
+
+  # ConfEMA
+  conf_ema_fast_beta: 0.30
+  conf_ema_slow_beta: 0.02
+  conf_ema_c_low: 0.04
+  conf_ema_c_high: 0.12
+  conf_ema_warmup: 5
+
+  # MultiProxy
+  mp_w:
+    L: 0.37
+    H: 0.29
+    tenengrad: 0.38
+    color_entropy: 0.28
+    edge_density: 0.0
+    local_contrast: 0.0
+  mp_fast_beta: 0.30
+  mp_slow_beta: 0.02
+  mp_c_low: 0.03
+  mp_c_high: 0.10
+  mp_directional: false
+
+  # Stabilisers (apply to all switching policies)
+  min_dwell_frames: 10
+  max_switches_per_100: 12
+
+metrics:
+  # IoU threshold for matching detections between fast and accurate.
+  # Used by the iou_match metric (replaces count_agree).
+  iou_threshold: 0.5
+  # Confidence floor applied to both models before matching.
+  conf_floor: 0.25
+
+output:
+  # Each run writes to results/<stage>/<config_hash>/.
+  # The runner computes config_hash from this file's contents.
+  stage: stage3
+  write_per_frame_csv: true
+  write_summary_json: true
